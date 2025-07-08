@@ -48,10 +48,12 @@ app.get('/get-pets', async (req, res) => {
     }
 
     if (playername) {
-      const playerData = petDoc.players[playername];
+      const playerKey = Object.keys(petDoc.players).find(
+        (key) => key.toLowerCase() === playername.toLowerCase()
+      );
 
-      if (playerData !== undefined) {
-        return res.json({ player: playerData });
+      if (playerKey) {
+        return res.json({ player: petDoc.players[playerKey] });
       } else {
         return res.status(404).json({ error: 'Player not found' });
       }
@@ -91,6 +93,7 @@ app.post('/increment-pets', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 app.post('/update-recent-pet', async (req, res) => {
   const { playername, petName, dateGot } = req.body;
 
