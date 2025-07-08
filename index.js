@@ -70,64 +70,36 @@ app.get('/get-pets', async (req, res) => {
 });
 
 app.post('/increment-pets', async (req, res) => {
-  const { playername } = req.body;
+  const { playername, petName, dateGot } = req.body;
 
   if (!playername) {
     return res.status(400).json({ error: 'Missing playername' });
   }
 
   try {
-    const result = await petsCollection.updateOne(
-      {},
-      {
-        $inc: { [`players.${playername}.totalPets`]: 1 },
-        $setOnInsert: { [`players.${playername}.mostRecentPet`]: '' },
-      },
-      { upsert: true }
-    );
+    const update = {
+      $inc: { [`pets.${playername}.totalPets`]: 1 },
+    };
 
-    if (result.matchedCount === 0 && !result.upsertedCount) {
-      return res.status(404).json({ error: 'Player not found or created' });
+    // If petName and dateGot are provided, also update mostRecentPet
+    if (petName && dateGot) {
+      update.$set = {
+        [`pets.${playername}.mostRecentPet`]: {
+          name: petName,
+          dateGot,
+        },
+      };
+    }
+
+    const result = await petsCollection.updateOne({}, update);
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Player not found in DB' });
     }
 
     res.json({ success: true, playername });
   } catch (error) {
     console.error('Increment error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-app.post('/update-recent-pet', async (req, res) => {
-  const { playername, petName, dateGot } = req.body;
-
-  if (!playername || !petName || !dateGot) {
-    return res
-      .status(400)
-      .json({ error: 'Missing playername, petName, or dateGot' });
-  }
-
-  try {
-    const result = await petsCollection.updateOne(
-      {},
-      {
-        $set: {
-          [`players.${playername}.mostRecentPet`]: { name: petName, dateGot },
-        },
-      },
-      { upsert: true }
-    );
-
-    if (result.matchedCount === 0 && !result.upsertedCount) {
-      return res.status(404).json({ error: 'Player not found or created' });
-    }
-
-    res.json({
-      success: true,
-      playername,
-      mostRecentPet: { name: petName, dateGot },
-    });
-  } catch (error) {
-    console.error('Update recent pet error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
