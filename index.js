@@ -81,7 +81,6 @@ app.post('/increment-pets', async (req, res) => {
       $inc: { [`pets.${playername}.totalPets`]: 1 },
     };
 
-    // If petName and dateGot are provided, also update mostRecentPet
     if (petName && dateGot) {
       update.$set = {
         [`pets.${playername}.mostRecentPet`]: {
@@ -91,10 +90,22 @@ app.post('/increment-pets', async (req, res) => {
       };
     }
 
-    const result = await petsCollection.updateOne({}, update);
+    update.$setOnInsert = {
+      [`pets.${playername}.totalPets`]: 0,
+      [`pets.${playername}.mostRecentPet`]: {
+        name: petName || '',
+        dateGot: dateGot || '',
+      },
+    };
 
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ error: 'Player not found in DB' });
+    const result = await petsCollection.updateOne(
+      {}, // filter, e.g. match the document holding pets (adjust if multiple docs)
+      update,
+      { upsert: true }
+    );
+
+    if (result.matchedCount === 0 && result.upsertedCount === 0) {
+      return res.status(404).json({ error: 'Player not found or created' });
     }
 
     res.json({ success: true, playername });
