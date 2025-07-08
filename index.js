@@ -53,7 +53,10 @@ app.get('/get-pets', async (req, res) => {
       );
 
       if (playerKey) {
-        return res.json({ player: petDoc.players[playerKey] });
+        return res.json({
+          player: petDoc.players[playerKey],
+          properName: playerKey,
+        });
       } else {
         return res.status(404).json({ error: 'Player not found' });
       }
