@@ -99,7 +99,7 @@ app.post('/increment-pets', async (req, res) => {
     };
 
     const result = await petsCollection.updateOne(
-      {}, // Assuming a single document contains all players
+      {}, // Assuming only one document in collection holding all players
       update,
       { upsert: true }
     );
