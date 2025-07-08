@@ -39,20 +39,25 @@ const petsCollection = db.collection('pets');
 
 app.get('/get-pets', async (req, res) => {
   const { playername } = req.query;
-  if (!playername) {
-    return res.status(400).json({ error: 'Playername is required' });
-  }
 
   try {
-    const pet = await petsCollection.findOne({
-      [`players.${playername}`]: { $exists: true },
-    });
+    const petDoc = await petsCollection.findOne({});
 
-    if (pet && pet.players?.[playername] !== undefined) {
-      res.json({ score: pet.players[playername] });
-    } else {
-      res.status(404).json({ error: 'Player not found' });
+    if (!petDoc || !petDoc.players) {
+      return res.status(404).json({ error: 'No pets data found' });
     }
+
+    if (playername) {
+      const score = petDoc.players[playername];
+
+      if (score !== undefined) {
+        return res.json({ score });
+      } else {
+        return res.status(404).json({ error: 'Player not found' });
+      }
+    }
+
+    return res.json({ players: petDoc.players });
   } catch (err) {
     console.error('MongoDB error:', err);
     res.status(500).json({ error: 'MongoDB query failed' });
