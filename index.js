@@ -91,18 +91,23 @@ app.post('/increment-pets', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 app.post('/update-recent-pet', async (req, res) => {
-  const { playername, petName } = req.body;
+  const { playername, petName, dateGot } = req.body;
 
-  if (!playername || !petName) {
-    return res.status(400).json({ error: 'Missing playername or petName' });
+  if (!playername || !petName || !dateGot) {
+    return res
+      .status(400)
+      .json({ error: 'Missing playername, petName, or dateGot' });
   }
 
   try {
     const result = await petsCollection.updateOne(
       {},
-      { $set: { [`players.${playername}.mostRecentPet`]: petName } },
+      {
+        $set: {
+          [`players.${playername}.mostRecentPet`]: { name: petName, dateGot },
+        },
+      },
       { upsert: true }
     );
 
@@ -110,7 +115,11 @@ app.post('/update-recent-pet', async (req, res) => {
       return res.status(404).json({ error: 'Player not found or created' });
     }
 
-    res.json({ success: true, playername, mostRecentPet: petName });
+    res.json({
+      success: true,
+      playername,
+      mostRecentPet: { name: petName, dateGot },
+    });
   } catch (error) {
     console.error('Update recent pet error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
