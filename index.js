@@ -78,12 +78,12 @@ app.post('/increment-pets', async (req, res) => {
 
   try {
     const update = {
-      $inc: { [`pets.${playername}.totalPets`]: 1 },
+      $inc: { [`players.${playername}.totalPets`]: 1 },
     };
 
     if (petName && dateGot) {
       update.$set = {
-        [`pets.${playername}.mostRecentPet`]: {
+        [`players.${playername}.mostRecentPet`]: {
           name: petName,
           dateGot,
         },
@@ -91,15 +91,15 @@ app.post('/increment-pets', async (req, res) => {
     }
 
     update.$setOnInsert = {
-      [`pets.${playername}.totalPets`]: 0,
-      [`pets.${playername}.mostRecentPet`]: {
+      [`players.${playername}.totalPets`]: 0,
+      [`players.${playername}.mostRecentPet`]: {
         name: petName || '',
         dateGot: dateGot || '',
       },
     };
 
     const result = await petsCollection.updateOne(
-      {}, // filter, e.g. match the document holding pets (adjust if multiple docs)
+      {}, // Assuming a single document contains all players
       update,
       { upsert: true }
     );
