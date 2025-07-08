@@ -48,10 +48,10 @@ app.get('/get-pets', async (req, res) => {
     }
 
     if (playername) {
-      const score = petDoc.players[playername];
+      const playerData = petDoc.players[playername];
 
-      if (score !== undefined) {
-        return res.json({ score });
+      if (playerData !== undefined) {
+        return res.json({ player: playerData });
       } else {
         return res.status(404).json({ error: 'Player not found' });
       }
@@ -74,16 +74,45 @@ app.post('/increment-pets', async (req, res) => {
   try {
     const result = await petsCollection.updateOne(
       {},
-      { $inc: { [`players.${playername}`]: 1 } }
+      {
+        $inc: { [`players.${playername}.totalPets`]: 1 },
+        $setOnInsert: { [`players.${playername}.mostRecentPet`]: '' },
+      },
+      { upsert: true }
     );
 
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ error: 'Player not found in DB' });
+    if (result.matchedCount === 0 && !result.upsertedCount) {
+      return res.status(404).json({ error: 'Player not found or created' });
     }
 
     res.json({ success: true, playername });
   } catch (error) {
     console.error('Increment error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.post('/update-recent-pet', async (req, res) => {
+  const { playername, petName } = req.body;
+
+  if (!playername || !petName) {
+    return res.status(400).json({ error: 'Missing playername or petName' });
+  }
+
+  try {
+    const result = await petsCollection.updateOne(
+      {},
+      { $set: { [`players.${playername}.mostRecentPet`]: petName } },
+      { upsert: true }
+    );
+
+    if (result.matchedCount === 0 && !result.upsertedCount) {
+      return res.status(404).json({ error: 'Player not found or created' });
+    }
+
+    res.json({ success: true, playername, mostRecentPet: petName });
+  } catch (error) {
+    console.error('Update recent pet error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
