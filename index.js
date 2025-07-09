@@ -79,6 +79,9 @@ app.post('/increment-pets', async (req, res) => {
   try {
     const update = {
       $inc: { [`players.${playername}.totalPets`]: 1 },
+      $setOnInsert: {
+        [`players.${playername}.totalPets`]: 0,
+      },
     };
 
     if (petName && dateGot) {
@@ -88,21 +91,13 @@ app.post('/increment-pets', async (req, res) => {
           dateGot,
         },
       };
+      update.$setOnInsert[`players.${playername}.mostRecentPet`] = {
+        name: petName,
+        dateGot,
+      };
     }
 
-    update.$setOnInsert = {
-      [`players.${playername}.totalPets`]: 0,
-      [`players.${playername}.mostRecentPet`]: {
-        name: petName || '',
-        dateGot: dateGot || '',
-      },
-    };
-
-    const result = await petsCollection.updateOne(
-      {}, // Assuming only one document in collection holding all players
-      update,
-      { upsert: true }
-    );
+    const result = await petsCollection.updateOne({}, update, { upsert: true });
 
     if (result.matchedCount === 0 && result.upsertedCount === 0) {
       return res.status(404).json({ error: 'Player not found or created' });
@@ -111,7 +106,7 @@ app.post('/increment-pets', async (req, res) => {
     res.json({ success: true, playername });
   } catch (error) {
     console.error('Increment error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: error.message });
   }
 });
 
