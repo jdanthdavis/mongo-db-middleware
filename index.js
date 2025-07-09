@@ -48,6 +48,7 @@ app.get('/get-pets', async (req, res) => {
     }
 
     if (playername) {
+      // Find player key case-insensitively for proper name
       const playerKey = Object.keys(petDoc.players).find(
         (key) => key.toLowerCase() === playername.toLowerCase()
       );
