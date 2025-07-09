@@ -79,10 +79,6 @@ app.post('/increment-pets', async (req, res) => {
   try {
     const update = {
       $inc: { [`players.${playername}.totalPets`]: 1 },
-      $setOnInsert: {
-        [`players.${playername}.totalPets`]: 0,
-        [`players.${playername}.mostRecentPet`]: { name: '', dateGot: '' },
-      },
     };
 
     if (petName && dateGot) {
@@ -94,10 +90,10 @@ app.post('/increment-pets', async (req, res) => {
       };
     }
 
-    const result = await petsCollection.updateOne({}, update, { upsert: true });
+    const result = await petsCollection.updateOne({}, update);
 
-    if (result.matchedCount === 0 && result.upsertedCount === 0) {
-      return res.status(404).json({ error: 'Player not found or created' });
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Player not found' });
     }
 
     res.json({ success: true, playername });
