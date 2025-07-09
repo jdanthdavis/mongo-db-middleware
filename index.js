@@ -81,6 +81,7 @@ app.post('/increment-pets', async (req, res) => {
       $inc: { [`players.${playername}.totalPets`]: 1 },
       $setOnInsert: {
         [`players.${playername}.totalPets`]: 0,
+        [`players.${playername}.mostRecentPet`]: { name: '', dateGot: '' },
       },
     };
 
@@ -90,10 +91,6 @@ app.post('/increment-pets', async (req, res) => {
           name: petName,
           dateGot,
         },
-      };
-      update.$setOnInsert[`players.${playername}.mostRecentPet`] = {
-        name: petName,
-        dateGot,
       };
     }
 
@@ -106,7 +103,7 @@ app.post('/increment-pets', async (req, res) => {
     res.json({ success: true, playername });
   } catch (error) {
     console.error('Increment error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
