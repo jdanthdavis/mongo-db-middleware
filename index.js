@@ -70,6 +70,39 @@ app.get('/get-pets', async (req, res) => {
   }
 });
 
+app.get('/get-crab', async (req, res) => {
+  const { playername } = req.query;
+
+  try {
+    const crabDoc = await db.collection('crabCount').findOne({});
+
+    if (!crabDoc || !crabDoc.players) {
+      return res.status(404).json({ error: 'No crab data found' });
+    }
+
+    if (playername) {
+      // Find player key case-insensitively for proper name
+      const playerKey = Object.keys(crabDoc.players).find(
+        (key) => key.toLowerCase() === playername.toLowerCase()
+      );
+
+      if (playerKey) {
+        return res.json({
+          player: crabDoc.players[playerKey],
+          properName: playerKey,
+        });
+      } else {
+        return res.status(404).json({ error: 'Player not found' });
+      }
+    }
+
+    return res.json({ players: crabDoc.players });
+  } catch (err) {
+    console.error('MongoDB error:', err);
+    res.status(500).json({ error: 'MongoDB query failed' });
+  }
+});
+
 app.post('/increment-pets', async (req, res) => {
   const { playername, petName, dateGot } = req.body;
 
