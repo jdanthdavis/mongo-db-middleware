@@ -36,6 +36,7 @@ try {
 
 const db = client.db('swap_meet_pets');
 const petsCollection = db.collection('pets');
+const crabCollection = db.collection('crabCount');
 
 app.get('/get-pets', async (req, res) => {
   const { playername } = req.query;
@@ -74,7 +75,7 @@ app.get('/get-crab', async (req, res) => {
   const { playername } = req.query;
 
   try {
-    const crabDoc = await db.collection('crabCount').findOne({});
+    const crabDoc = await crabCollection.findOne({});
 
     if (!crabDoc || !crabDoc.players) {
       return res.status(404).json({ error: 'No crab data found' });
@@ -100,6 +101,31 @@ app.get('/get-crab', async (req, res) => {
   } catch (err) {
     console.error('MongoDB error:', err);
     res.status(500).json({ error: 'MongoDB query failed' });
+  }
+});
+
+app.post('/increment-crab', async (req, res) => {
+  const { playername, killCount } = req.body;
+
+  if (!playername) {
+    return res.status(400).json({ error: 'Missing playername' });
+  }
+
+  try {
+    const update = {
+      $inc: { [`players.${playername}.count`]: 1 },
+    };
+
+    const result = await crabCollection.updateOne({}, update);
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    res.json({ success: true, playername });
+  } catch (error) {
+    console.error('Increment error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
