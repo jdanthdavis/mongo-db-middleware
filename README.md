@@ -2,6 +2,10 @@
 
 This is a simple Express.js middleware that provides two main API endpoints for interacting with a MongoDB database. The middleware is designed to interact with a MongoDB collection named `pets`, allowing you to query and update pet scores for players.
 
+## Render deployment
+
+This service is ready for Render without a Heroku-style Procfile. Render can start it with the existing `npm start` script, and the app exposes `/health` for health checks.
+
 ## Features
 
 - **GET `/get-pets`**: Retrieves the score of a specific player by querying the MongoDB database.
